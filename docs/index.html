@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kev Dev Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --accent-1: #FF7A00;
+    --accent-2: #00E5FF;
+    --accent-1-rgb: 255, 122, 0;
+    --accent-2-rgb: 0, 229, 255;
+    --kk-bg: #07070f;
+    --kk-text: #bdbdda;
+    --kk-text-bright: #eaeaf8;
+    --kk-text-muted: rgba(189,189,218,0.55);
+    --kk-card: linear-gradient(135deg,rgba(255,255,255,0.055) 0%,rgba(255,255,255,0.018) 100%);
+    --kk-border: rgba(255,255,255,0.09);
+    --kk-input: rgba(255,255,255,0.038);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--kk-bg); color: var(--kk-text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 14px; -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; color: var(--kk-text-bright); font-weight: 700; letter-spacing: -0.3px; }
+  h1 .dot { color: var(--accent-1); }
+  .sub { color: var(--kk-text-muted); font-size: 12.5px; margin-bottom: 6px; }
+  .sub a { color: var(--accent-2); text-decoration: none; }
+  .sub a:hover { text-decoration: underline; }
+  .updated { color: var(--kk-text-muted); font-size: 11px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .kpi {
+    background: var(--kk-card); border: 1px solid var(--kk-border); border-radius: 12px;
+    padding: 16px 18px; backdrop-filter: blur(6px);
+  }
+  .kpi .num { font-size: 26px; font-weight: 700; color: var(--kk-text-bright); font-family: 'JetBrains Mono', monospace; }
+  .kpi .label { color: var(--kk-text-muted); font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2,1fr); } }
+  .card {
+    background: var(--kk-card); border: 1px solid var(--kk-border); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 16px; backdrop-filter: blur(6px);
+  }
+  .card h2 { font-size: 13px; margin: 0 0 14px; display: flex; justify-content: space-between; color: var(--kk-text-bright);
+    text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .card h2 .tag {
+    font-size: 10.5px; color: var(--accent-1); background: rgba(var(--accent-1-rgb),0.12);
+    border: 1px solid rgba(var(--accent-1-rgb),0.3); border-radius: 6px; padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace; text-transform: none; letter-spacing: 0;
+  }
+  .repo-block { border: 1px solid var(--kk-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: rgba(255,255,255,0.015); }
+  .repo-head { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .repo-name { font-weight: 600; color: var(--kk-text-bright); font-size: 13.5px; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+    background: rgba(var(--accent-2-rgb),0.12); color: var(--accent-2);
+    border: 1px solid rgba(var(--accent-2-rgb),0.35); font-family: 'JetBrains Mono', monospace;
+  }
+  .pr-list { margin-top: 10px; display: none; }
+  .pr-list.open { display: block; }
+  .pr-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--kk-border); font-size: 12.5px; }
+  .pr-row:first-child { border-top: none; }
+  .pr-row a { color: var(--kk-text); text-decoration: none; }
+  .pr-row a:hover { color: var(--accent-2); }
+  .pr-age { color: var(--kk-text-muted); white-space: nowrap; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  .draft-tag {
+    font-size: 9.5px; color: var(--accent-1); background: rgba(var(--accent-1-rgb),0.14);
+    border-radius: 5px; padding: 1px 6px; margin-right: 6px; font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  }
+  .log-row { padding: 8px 0; border-top: 1px solid var(--kk-border); font-size: 12px; }
+  .log-row:first-child { border-top: none; }
+  .log-action { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .log-action.opened { color: #34d399; }
+  .log-action.merged { color: var(--accent-2); }
+  .log-action.closed { color: #f87171; }
+  .log-action.updated { color: var(--accent-1); }
+  .log-meta { color: var(--kk-text-muted); font-size: 10.5px; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .empty { color: var(--kk-text-muted); font-size: 12px; padding: 4px 0; }
+  .error { color: #f87171; font-size: 11.5px; font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: rgba(var(--accent-1-rgb),0.35); color: #fff; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--kk-bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(var(--accent-1-rgb),0.5); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kev<span class="dot">.</span>Dev Command Center</h1>
+  <div class="sub">Live aus <a href="#" id="repo-owner-link" target="_blank" rel="noopener">GitHub</a> via Supabase-Sync. Kein Rebuild noetig - diese Seite fragt Supabase bei jedem Aufruf direkt ab.</div>
+  <div class="updated" id="updated">laedt...</div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="num" id="kpi-prs">-</div><div class="label">Offene PRs</div></div>
+    <div class="kpi"><div class="num" id="kpi-repos">-</div><div class="label">Repos mit offenen PRs</div></div>
+    <div class="kpi"><div class="num" id="kpi-changes-24h">-</div><div class="label">Aenderungen 24h</div></div>
+    <div class="kpi"><div class="num" id="kpi-changes-7d">-</div><div class="label">Aenderungen 7 Tage</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Repo-Board <span class="tag" id="repo-tag">laedt...</span></h2>
+      <div id="repo-container">laedt...</div>
+    </div>
+    <div class="card">
+      <h2>Activity-Log <span class="tag" id="log-tag">laedt...</span></h2>
+      <div id="log-container">laedt...</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "SUPABASE_URL_PLACEHOLDER";
+const SUPABASE_ANON_KEY = "SUPABASE_ANON_KEY_PLACEHOLDER";
+const GITHUB_OWNER = "KKEEY92";
+
+document.getElementById("repo-owner-link").href = "https://github.com/" + GITHUB_OWNER;
+document.getElementById("repo-owner-link").textContent = "github.com/" + GITHUB_OWNER;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return "vor " + mins + " Min.";
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return "vor " + hours + " Std.";
+  const days = Math.floor(hours / 24);
+  return "vor " + days + " Tag" + (days === 1 ? "" : "en");
+}
+
+async function loadRepoBoard() {
+  const { data, error } = await supabase
+    .from("pr_snapshot")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const container = document.getElementById("repo-container");
+  if (error) {
+    container.innerHTML = '<div class="error">Konnte pr_snapshot nicht laden: ' + esc(error.message) + '</div>';
+    return;
+  }
+  document.getElementById("kpi-prs").textContent = data.length;
+
+  const byRepo = {};
+  data.forEach(pr => (byRepo[pr.repo_name] = byRepo[pr.repo_name] || []).push(pr));
+  const repoNames = Object.keys(byRepo).sort((a, b) => byRepo[b].length - byRepo[a].length);
+  document.getElementById("kpi-repos").textContent = repoNames.length;
+  document.getElementById("repo-tag").textContent = repoNames.length + " Repos";
+
+  if (!repoNames.length) {
+    container.innerHTML = '<div class="empty">Keine offenen PRs (oder noch kein Sync gelaufen).</div>';
+    return;
+  }
+
+  container.innerHTML = repoNames.map((repo, i) => {
+    const items = byRepo[repo];
+    const rows = items.map(pr => (
+      '<div class="pr-row"><div>' +
+      (pr.draft ? '<span class="draft-tag">Draft</span>' : "") +
+      '<a href="' + esc(pr.url) + '" target="_blank" rel="noopener">' + esc(pr.title) + '</a></div>' +
+      '<div class="pr-age">' + timeAgo(pr.created_at) + '</div></div>'
+    )).join("");
+    return (
+      '<div class="repo-block">' +
+      '<div class="repo-head" onclick="this.nextElementSibling.classList.toggle(\'open\')">' +
+      '<div class="repo-name">' + esc(repo) + '</div>' +
+      '<span class="badge">' + items.length + '</span></div>' +
+      '<div class="pr-list ' + (i === 0 ? "open" : "") + '">' + rows + '</div></div>'
+    );
+  }).join("");
+}
+
+async function loadActivityLog() {
+  const { data, error } = await supabase
+    .from("activity_log")
+    .select("*")
+    .order("occurred_at", { ascending: false })
+    .limit(40);
+
+  const container = document.getElementById("log-container");
+  if (error) {
+    container.innerHTML = '<div class="error">Konnte activity_log nicht laden: ' + esc(error.message) + '</div>';
+    return;
+  }
+  document.getElementById("log-tag").textContent = data.length + " Eintraege";
+
+  const now = Date.now();
+  const in24h = data.filter(r => now - new Date(r.occurred_at).getTime() < 86400000).length;
+  const in7d = data.filter(r => now - new Date(r.occurred_at).getTime() < 7 * 86400000).length;
+  document.getElementById("kpi-changes-24h").textContent = in24h;
+  document.getElementById("kpi-changes-7d").textContent = in7d;
+
+  if (!data.length) {
+    container.innerHTML = '<div class="empty">Noch keine Log-Eintraege. Laeuft der Sync schon?</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(r => (
+    '<div class="log-row"><div><span class="log-action ' + esc(r.action) + '">' + esc(r.action) + '</span> - ' +
+    esc(r.repo_name) + ' ' + (r.entity_number ? "#" + esc(r.entity_number) : "") +
+    (r.title ? ": " + esc(r.title) : "") + '</div>' +
+    '<div class="log-meta">' + esc(r.actor || "unbekannt") + ' - ' + timeAgo(r.occurred_at) + '</div></div>'
+  )).join("");
+}
+
+async function loadAll() {
+  await Promise.all([loadRepoBoard(), loadActivityLog()]);
+  document.getElementById("updated").textContent = "Zuletzt geladen: " + new Date().toLocaleString("de-DE");
+}
+loadAll();
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>
