@@ -1,0 +1,48 @@
+name: KKI Guardrails Rollout
+
+# Rollt den KKI Multi-Agent-Workflow-Standard additiv ueber alle Repos von
+# KKEEY92 aus: README-Hinweis + AGENTS.md + AGENT_LOG.md, falls noch nicht
+# vorhanden. Idempotent -- wiederholte Laeufe aendern nichts an Repos, die
+# den Standard schon haben. Bestehende AGENTS.md-Dateien werden NIE
+# ueberschrieben (Carsten-Regel: additiv, nicht destruktiv).
+#
+# Setup (einmalig, manuell durch Kevin Kuck):
+#   1. Fine-grained Personal Access Token erstellen:
+#      https://github.com/settings/tokens?type=beta
+#      - Resource owner: KKEEY92
+#      - Repository access: All repositories
+#      - Permissions: Contents = Read and write, Metadata = Read-only
+#   2. Als Repository Secret in DIESEM Repo (kev-dev-command-center)
+#      hinterlegen unter dem Namen: KKI_GUARDRAILS_TOKEN
+#      Settings -> Secrets and variables -> Actions -> New repository secret
+#
+# Danach laeuft dieser Workflow automatisch jeden Montag und kann jederzeit
+# manuell ueber "Run workflow" angestossen werden.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # jeden Montag 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run KKI Guardrails Rollout
+        env:
+          GH_TOKEN: ${{ secrets.KKI_GUARDRAILS_TOKEN }}
+        run: python scripts/kki_guardrails_rollout.py
