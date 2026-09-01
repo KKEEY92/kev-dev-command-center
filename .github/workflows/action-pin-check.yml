@@ -1,0 +1,34 @@
+name: Action pin check
+
+# Fail-open: report only. Ungepinnten Tags sind Tech-Debt, kein Merge-Blocker.
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pin-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List unpinned actions (warn only)
+        run: |
+          set -euo pipefail
+          echo "::notice::Pruefe uses: auf fehlende 40-Zeichen-SHA"
+          unpinned="$(grep -RInE '^[[:space:]]*uses:[[:space:]]+[^#]+' .github/workflows | grep -vE '@[0-9a-f]{40}' || true)"
+          if [ -n "$unpinned" ]; then
+            echo "$unpinned"
+            echo "::warning::Actions ohne Commit-SHA gefunden. Kein Fail — STANDARD Phase 1."
+          else
+            echo "Alle uses: sind SHA-gepinnt."
+          fi
