@@ -1,0 +1,7 @@
+# Solo-Maintainer. CODEOWNERS erzeugt Sichtbarkeit, keine Pflicht-Reviews.
+* @KKEEY92
+
+/.github/ @KKEEY92
+/governance/ @KKEEY92
+/SECURITY.md @KKEEY92
+/scripts/ @KKEEY92
