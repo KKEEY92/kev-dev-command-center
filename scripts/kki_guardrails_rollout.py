@@ -16,6 +16,7 @@ Carsten-Regeln (hart):
 Benoetigt: Umgebungsvariable GH_TOKEN (Fine-grained PAT mit
 Contents: Read & Write auf alle Ziel-Repos, oder ein classic PAT mit
 `repo`-Scope). Wird als GitHub Actions Secret bereitgestellt.
+Ohne Token: Warning, Exit 0 — kein roter Scheduled-Run.
 """
 
 import base64
@@ -31,10 +32,34 @@ API = "https://api.github.com"
 OWNER = "KKEEY92"
 MARKER = "KKI Multi-Agent-Workflow"
 
-TOKEN = os.environ.get("GH_TOKEN")
+TOKEN = (os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or "").strip()
+
+
+def write_summary(lines):
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        Path(summary_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 if not TOKEN:
-    print("FEHLER: GH_TOKEN ist nicht gesetzt. Abbruch.", file=sys.stderr)
-    sys.exit(1)
+    msg = (
+        "WARNUNG: Weder GH_TOKEN noch GITHUB_TOKEN gesetzt. "
+        "Rollout uebersprungen. Secret KKI_GUARDRAILS_TOKEN in "
+        "kev-dev-command-center hinterlegen."
+    )
+    print(msg, file=sys.stderr)
+    write_summary(
+        [
+            "# KKI Guardrails Rollout -- uebersprungen",
+            "",
+            "Secret `KKI_GUARDRAILS_TOKEN` fehlt. Job bewusst gruen, "
+            "damit der Montagslauf die Inbox nicht zumuellt.",
+            "",
+            "Setup: GitHub Settings → Tokens (fine-grained) → Contents R/W "
+            "auf alle Repos → als Repo-Secret `KKI_GUARDRAILS_TOKEN` speichern.",
+        ]
+    )
+    sys.exit(0)
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
@@ -258,10 +283,7 @@ def main():
         summary_lines.append(f"| {name} | {'; '.join(actions)} |")
         time.sleep(0.5)  # sanft mit der Rate-Limit umgehen
 
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary_path:
-        Path(summary_path).write_text("\n".join(summary_lines), encoding="utf-8")
-
+    write_summary(summary_lines)
     print("\nFertig.")
 
 

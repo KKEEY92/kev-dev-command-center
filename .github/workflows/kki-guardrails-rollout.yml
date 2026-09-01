@@ -16,6 +16,9 @@ name: KKI Guardrails Rollout
 #      hinterlegen unter dem Namen: KKI_GUARDRAILS_TOKEN
 #      Settings -> Secrets and variables -> Actions -> New repository secret
 #
+# Fehlt das Secret, bricht der Job nicht mehr rot ab (Inbox-Noise).
+# Dann nur Warning + Summary. Rollout selbst braucht das PAT.
+#
 # Danach laeuft dieser Workflow automatisch jeden Montag und kann jederzeit
 # manuell ueber "Run workflow" angestossen werden.
 
@@ -45,4 +48,5 @@ jobs:
       - name: Run KKI Guardrails Rollout
         env:
           GH_TOKEN: ${{ secrets.KKI_GUARDRAILS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/kki_guardrails_rollout.py
